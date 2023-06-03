@@ -1,0 +1,18 @@
+{
+  "left_ear": [27, -1103, 51],
+  "right_ear": [-18, -1087, 57],
+  "left_shoulder": [157, -963, 1],
+  "right_shoulder": [-102, -937, -8],
+  "left_hip": [100, -550, 28],
+  "right_hip": [-48, -554, 21],
+  "left_ankle": [88, 2, 0],
+  "right_ankle": [-87, -2, 0],
+  "left_knee": [107, -278, 38],
+  "right_knee": [-110, -268, 27],
+  "mid_shoulder": [27, -960, -4],
+  "naval": [26, -672, 15],
+  "mid_eyes": [7, -1122, 94],
+  "left_wrist": [233, -584, 78],
+  "right_wrist": [-171, -561, 68],
+  "neck": [24, -1016, 18]
+}

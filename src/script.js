@@ -7,8 +7,16 @@ import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader";
 import { RGBELoader } from "three/examples/jsm/loaders/RGBELoader.js";
 import { GUI } from "lil-gui";
 import "./style.css";
-import { VRButton } from "three/addons/webxr/VRButton.js";
+import { VRButton } from "three/examples/jsm/webxr/VRButton.js";
+import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
+import Common from "./common.json" assert { type: "json" };
+console.log(Common);
 import { Vector3 } from "three";
+
+// import fs from "fs";
+// var dataArray = JSON.parse(fs.readFileSync("back.json", "utf-8"));
+
+// console.log(dataArray);
 
 const canvas = document.querySelector("canvas.webgl");
 const sizes = {
@@ -27,12 +35,12 @@ window.addEventListener("resize", () => {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
 
-const scene = new THREE.Scene();
+var scene = new THREE.Scene();
 
 const camera = new THREE.PerspectiveCamera(22.5, 1, 0.001, 1000);
 camera.aspect = sizes.width / sizes.height;
 camera.updateProjectionMatrix();
-camera.position.set(0, 3, 10);
+camera.position.set(0, 1, 3);
 scene.add(camera);
 
 const renderer = new THREE.WebGLRenderer({
@@ -42,12 +50,13 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+// scene.background = new THREE.Color("#9A9A9A");
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.35;
+renderer.toneMappingExposure = 0.5;
 renderer.xr.enabled = true;
 const session = renderer.xr.getSession();
-renderer.xr.setReferenceSpaceType("viewer");
+renderer.xr.setReferenceSpaceType("local-floor");
 // renderer.xr.cameraAutoUpdate = false;
 // const xrCamera = renderer.xr.getCamera();
 
@@ -59,15 +68,168 @@ renderer.xr.setReferenceSpaceType("viewer");
 
 // renderer.xr.setSession("local-floor");
 
-document.body.appendChild(VRButton.createButton(renderer));
+var button = VRButton.createButton(renderer);
 
-scene.background = new THREE.Color("#9A9A9A");
+// Change the CSS position of the button
+button.style.position = "fixed";
+button.style.top = "630px"; // Change the top position
+button.style.bottom = "100px";
+button.style.backgroundColor = "black";
+
+// Add the button to the document body
+document.body.appendChild(button);
+
+var arButton = ARButton.createButton(renderer, {
+  requiredFeatures: ["hit-test"],
+});
+
+function onSelect() {
+  if (reticle.visible) {
+    // const material = new THREE.MeshPhongMaterial({
+    //   color: 0xffffff * Math.random(),
+    // });
+    // const mesh = new THREE.Mesh(geometry, material);
+    group.position.setFromMatrixPosition(reticle.matrix);
+    // light.position.setFromMatrixPosition(reticle.matrix);
+    // Iterate through the objects in group
+    for (const object of group.children) {
+      object.position.set(0, 0, 0);
+      object.scale.set(0.4, 0.4, 0.4);
+    }
+
+    scene.add(group);
+  }
+}
+let reticle, controller;
+let hitTestSource = null;
+let hitTestSourceRequested = false;
+let container;
+container = document.createElement("div");
+document.body.appendChild(container);
+container.appendChild(renderer.domElement);
+controller = renderer.xr.getController(0);
+controller.addEventListener("select", onSelect);
+scene.add(controller);
+
+reticle = new THREE.Mesh(
+  new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+  new THREE.MeshBasicMaterial()
+);
+reticle.matrixAutoUpdate = false;
+reticle.visible = false;
+scene.add(reticle);
+
+// Change the CSS position of the button
+arButton.style.backgroundColor = "black";
+// arButton.style.position = "fixed";
+// arButton.style.top = "630px"; // Change the top position
+// arButton.style.bottom = "100px";
+
+// Add the button to the document body
+document.body.appendChild(arButton);
+
+// document.body.appendChild(VRButton.createButton(renderer));
+
+// const pmreGenerator = new THREE.PMREMGenerator(renderer);
+
+// console.log(scene.background);
 const loader = new RGBELoader();
 const hdrTextureURL = new URL("sky.hdr", import.meta.url);
 loader.load(hdrTextureURL, (texture) => {
   texture.mapping = THREE.EquirectangularReflectionMapping;
   // scene.background = texture;
   scene.environment = texture;
+});
+
+const button_top = document.querySelector(".top");
+const button_front = document.querySelector(".front");
+const button_back = document.querySelector(".back");
+const button_left = document.querySelector(".left");
+const button_right = document.querySelector(".right");
+const button_upper_front = document.querySelector(".upperFront");
+const button_mid_front = document.querySelector(".midFront");
+const button_lower_front = document.querySelector(".lowerFront");
+const button_upper_back = document.querySelector(".upperBack");
+const button_mid_back = document.querySelector(".midBack");
+const button_lower_back = document.querySelector(".lowerBack");
+const button_5yearsPlus = document.querySelector(".years5Plus");
+const button_5yearsMinus = document.querySelector(".years5Minus");
+
+button_top.addEventListener("click", () => {
+  camera.position.set(0, 6, -2);
+  console.log("top");
+  controls.target.set(0, 0.9, -2);
+  controls.update();
+});
+
+button_front.addEventListener("click", () => {
+  camera.position.set(0, 1, 3);
+  console.log("front");
+  controls.target.set(0, 0.9, -2);
+  controls.update();
+});
+
+button_back.addEventListener("click", () => {
+  camera.position.set(0, 1, -7);
+  console.log("back");
+  controls.target.set(0, 0.9, -2);
+  controls.update();
+});
+
+button_left.addEventListener("click", () => {
+  camera.position.set(5, 1, 0);
+  console.log("left");
+  controls.target.set(0, 0.9, -2);
+  controls.update();
+});
+
+button_right.addEventListener("click", () => {
+  camera.position.set(-5, 1, 0);
+  console.log("right");
+  controls.target.set(0, 0.9, -2);
+  controls.update();
+});
+
+button_upper_front.addEventListener("click", () => {
+  camera.position.set(0, 1.9, 0.8);
+  console.log("upper front");
+  controls.target.set(0, 1.4, -2);
+  controls.update();
+});
+
+button_upper_back.addEventListener("click", () => {
+  camera.position.set(0, 1.9, -4.8);
+  console.log("upper back");
+  controls.target.set(0, 1.4, -2);
+  controls.update();
+});
+
+button_mid_front.addEventListener("click", () => {
+  camera.position.set(0, 1.2, 2);
+  console.log("mid front");
+  controls.target.set(0, 1.2, -2);
+  controls.update();
+});
+
+button_mid_back.addEventListener("click", () => {
+  camera.position.set(0, 1.2, -6);
+  console.log("mid back");
+  controls.target.set(0, 1.2, -2);
+  controls.update();
+});
+
+button_lower_front.addEventListener("click", () => {
+  camera.position.set(0, 0.3, 2);
+  console.log("upper front");
+  controls.target.set(0, 0.5, -2);
+  controls.update();
+});
+
+button_lower_back.addEventListener("click", () => {
+  camera.position.set(0, 0.3, -6);
+  console.log("lower front");
+  controls.target.set(0, 0.5, -2);
+  controls.update();
 });
 
 // Plane Mesh with translucent material
@@ -103,7 +265,7 @@ gltfLoader.setDRACOLoader(dracoLoader);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.target.set(0, 1.875, 0.1);
+controls.target.set(0, 0.9, -2);
 controls.update();
 
 let skullMixer;
@@ -114,18 +276,94 @@ let numSkullActions = 0;
 // skull19
 // LeftLegLatest1
 
-// fetch('./data.json')
-//     .then((response) => response.json())
-//     .then((json) => console.log(json));
+function Head_X_L_Deform(left_ear, right_ear) {
+  // Slope of Horizontal Line
+  let m1 = (right_ear[1] - right_ear[1]) / (left_ear[0] - right_ear[0]);
 
+  // Slope of Deformed Line
+  let m2 = (left_ear[1] - right_ear[1]) / (left_ear[0] - right_ear[0]);
+
+  // Angle between the two lines
+  let angle = (Math.atan((m2 - m1) / (1 + m1 * m2)) * 180) / Math.PI;
+
+  // Lerp angle between 0 to 0.5
+  let lerp_angle = (angle + 90) / 180;
+  console.log(0.5 - lerp_angle);
+  head_x_l = 0.5 - lerp_angle;
+  return head_x_l;
+}
+
+function Head_X_R_Deform(left_ear, right_ear) {
+  // Slope of Horizontal Line
+  let m1 = (right_ear[1] - right_ear[1]) / (left_ear[0] - right_ear[0]);
+
+  // Slope of Deformed Line
+  let m2 = (left_ear[1] - right_ear[1]) / (left_ear[0] - right_ear[0]);
+
+  // Angle between the two lines
+
+  let angle = (Math.atan((m2 - m1) / (1 + m1 * m2)) * 180) / Math.PI;
+  // Lerp angle between 0 to 0.5
+  let lerp_angle = (angle + 90) / 180;
+  console.log(0.5 - lerp_angle);
+  head_x_r = 0.5 - lerp_angle;
+  return head_x_r;
+}
+
+// let obj;
+// fetch("./back.json")
+//   .then((response) => response.json())
+//   .then((json) => (obj = json));
+// console.log(obj);
+
+// import a json file
+
+const group = new THREE.Group();
 gltfLoader.load("skull20.glb", (gltf) => {
-  scene.add(gltf.scene);
+  // scene.add(gltf.scene);
+  group.add(gltf.scene);
+  gltf.scene.scale.set(0.5, 0.5, 0.5);
+  gltf.scene.position.set(0, 0, -2);
   numSkullActions = gltf.animations.length;
   skullMixer = new THREE.AnimationMixer(gltf.scene);
   gltf.animations.forEach((clip) => {
     // skullAnimations[clip.name.concat("Action")] = clip;
     const name = clip.name;
-    skullAdditiveActions[clip.name] = { weight: 0 };
+    console.log(name);
+    if (name == "Head-X-L") {
+      console.log("Head-X-L");
+      skullAdditiveActions[clip.name] = { weight: 0.25 };
+    }
+    // if (name == "Head-X-L" || name == "Head-X-R") {
+    //   console.log(Common["left_ear"][1] / 30);
+    //   console.log(Common["right_ear"][1] / 30);
+    //   if (
+    //     Math.floor(Common["left_ear"][1] / 30) ==
+    //     Math.floor(Common["right_ear"][1] / 30)
+    //   ) {
+    //     skullAdditiveActions[clip.name] = { weight: 0 };
+    //     console.log("No Deformation");
+    //   } else if (
+    //     Math.floor(Common["left_ear"][1] / 30) >
+    //     Math.floor(Common["right_ear"][1] / 30)
+    //   ) {
+    //     skullAdditiveActions[clip.name] = {
+    //       weight: Head_X_L_Deform(Common["left_ear"], Common["right_ear"]),
+    //     };
+    //     console.log("Left Deformation");
+    //   } else {
+    //     skullAdditiveActions[clip.name] = {
+    //       weight: Head_X_R_Deform(Common["left_ear"], Common["right_ear"]),
+    //     };
+    //     console.log("Right Deformation");
+    //   }
+    // } else {
+    //   skullAdditiveActions[clip.name] = { weight: 0 };
+    // }
+    else {
+      skullAdditiveActions[clip.name] = { weight: 0 };
+    }
+
     THREE.AnimationUtils.makeClipAdditive(clip);
     clip = THREE.AnimationUtils.subclip(clip, clip.name, 2, 3, 24);
     const action = skullMixer.clipAction(clip);
@@ -136,20 +374,75 @@ gltfLoader.load("skull20.glb", (gltf) => {
   let panel = createPanel();
   loadSpinal(panel);
   loadLeg(panel);
-  tick();
 });
 
 let spinalMixer;
 let spinalAdditiveActions = {};
 let numSpinalActions = 0;
+let Skeletonpoints = {};
+// const objectLayer = 1 << 10;
+
+const folder4 = panel.addFolder("Skeleton Points");
+folder4.close();
+gltfLoader.load("SkeletonPoints5.glb", (gltf) => {
+  // scene.add(gltf.scene);
+  group.add(gltf.scene);
+  gltf.scene.scale.set(0.5, 0.5, 0.5);
+  gltf.scene.position.set(0, 0, -2);
+  Skeletonpoints = gltf.scene;
+  gltf.scene.traverse(function (child) {
+    if (child.isMesh) {
+      child.position.z = -child.position.z;
+      child.add(new THREE.AxesHelper(2.0));
+      child.add(createLabel(child.name));
+      // console.log(child.position.x);
+      folder4
+        .add(
+          child.position,
+          "x",
+          child.position.x - 0.1,
+          child.position.x + 0.1,
+          0.0001
+        )
+        .name(child.name + " x");
+      folder4
+        .add(
+          child.position,
+          "y",
+          child.position.y - 0.15,
+          child.position.y + 0.15,
+          0.0001
+        )
+        .name(child.name + " y");
+      folder4
+        .add(
+          child.position,
+          "z",
+          child.position.z - 0.2,
+          child.position.z + 0.2,
+          0.0001
+        )
+        .name(child.name + " z");
+    }
+  });
+});
 function loadSpinal(panel) {
   gltfLoader.load("SpinalLatest7.glb", (gltf) => {
-    scene.add(gltf.scene);
+    // scene.add(gltf.scene);
+    group.add(gltf.scene);
+    gltf.scene.scale.set(0.5, 0.5, 0.5);
+    gltf.scene.position.set(0, 0, -2);
     numSpinalActions = gltf.animations.length;
     spinalMixer = new THREE.AnimationMixer(gltf.scene);
     gltf.animations.forEach((clip) => {
       const name = clip.name;
-      spinalAdditiveActions[clip.name] = { weight: 0 };
+      if (name == "LeftShoulder-Z-Up") {
+        // console.log("LeftShoulder-Z-Up");
+        spinalAdditiveActions[clip.name] = { weight: 0.35 };
+      } else {
+        spinalAdditiveActions[clip.name] = { weight: 0 };
+      }
+
       THREE.AnimationUtils.makeClipAdditive(clip);
       clip = THREE.AnimationUtils.subclip(clip, clip.name, 2, 3, 24);
       const action = spinalMixer.clipAction(clip);
@@ -178,12 +471,20 @@ let legAdditiveActions = {};
 let numLegActions = 0;
 function loadLeg(panel) {
   gltfLoader.load("LeftLegLatest2.glb", (gltf) => {
-    scene.add(gltf.scene);
+    // scene.add(gltf.scene);
+    group.add(gltf.scene);
+    gltf.scene.scale.set(0.5, 0.5, 0.5);
+    gltf.scene.position.set(0, 0, -2);
     numLegActions = gltf.animations.length;
     legMixer = new THREE.AnimationMixer(gltf.scene);
     gltf.animations.forEach((clip) => {
       const name = clip.name;
-      legAdditiveActions[clip.name] = { weight: 0 };
+      if (name == "RightLeg-X-Positive") {
+        legAdditiveActions[clip.name] = { weight: 0.45 };
+      } else {
+        legAdditiveActions[clip.name] = { weight: 0 };
+      }
+      // legAdditiveActions[clip.name] = { weight: 0 };
       THREE.AnimationUtils.makeClipAdditive(clip);
       clip = THREE.AnimationUtils.subclip(clip, clip.name, 2, 3, 24);
       const action = legMixer.clipAction(clip);
@@ -204,6 +505,7 @@ function loadLeg(panel) {
         });
     }
     folder3.close();
+    scene.add(group);
   });
 }
 
@@ -253,6 +555,88 @@ function createPanel() {
   folder1.close();
   return panel;
 }
+
+// const res = await fetch("/back.json");
+// const data = await res.json();
+
+// console.log("hello");
+// console.log(data);
+
+button_5yearsPlus.addEventListener("click", () => {
+  // Iterate through all skullAdditiveActions
+  for (const name of Object.keys(skullAdditiveActions)) {
+    if (skullAdditiveActions[name].weight != 0) {
+      skullAdditiveActions[name].weight += 0.05;
+      panelSettings[name] += 0.05;
+      setWeight(
+        skullAdditiveActions[name].action,
+        skullAdditiveActions[name].weight
+      );
+    }
+  }
+
+  // Iterate through all spinalAdditiveActions
+  for (const name of Object.keys(spinalAdditiveActions)) {
+    if (spinalAdditiveActions[name].weight != 0) {
+      spinalAdditiveActions[name].weight += 0.05;
+      panelSettings[name] += 0.05;
+      setWeight(
+        spinalAdditiveActions[name].action,
+        spinalAdditiveActions[name].weight
+      );
+    }
+  }
+
+  // Iterate through all legAdditiveActions
+  for (const name of Object.keys(legAdditiveActions)) {
+    if (legAdditiveActions[name].weight != 0) {
+      legAdditiveActions[name].weight += 0.05;
+      panelSettings[name] += 0.05;
+      setWeight(
+        legAdditiveActions[name].action,
+        legAdditiveActions[name].weight
+      );
+    }
+  }
+});
+
+button_5yearsMinus.addEventListener("click", () => {
+  // Iterate through all skullAdditiveActions
+  for (const name of Object.keys(skullAdditiveActions)) {
+    if (skullAdditiveActions[name].weight != 0) {
+      skullAdditiveActions[name].weight -= 0.05;
+      panelSettings[name] -= 0.05;
+      setWeight(
+        skullAdditiveActions[name].action,
+        skullAdditiveActions[name].weight
+      );
+    }
+  }
+
+  // Iterate through all spinalAdditiveActions
+  for (const name of Object.keys(spinalAdditiveActions)) {
+    if (spinalAdditiveActions[name].weight != 0) {
+      spinalAdditiveActions[name].weight -= 0.05;
+      panelSettings[name] -= 0.05;
+      setWeight(
+        spinalAdditiveActions[name].action,
+        spinalAdditiveActions[name].weight
+      );
+    }
+  }
+
+  // Iterate through all legAdditiveActions
+  for (const name of Object.keys(legAdditiveActions)) {
+    if (legAdditiveActions[name].weight != 0) {
+      legAdditiveActions[name].weight -= 0.05;
+      panelSettings[name] -= 0.05;
+      setWeight(
+        legAdditiveActions[name].action,
+        legAdditiveActions[name].weight
+      );
+    }
+  }
+});
 
 function activateActionLeg(action) {
   const clip = action.getClip();
@@ -317,7 +701,42 @@ function updateXRCamera() {
 }
 updateXRCamera();
 
-renderer.setAnimationLoop(function () {
+renderer.setAnimationLoop(function (timestamp, frame) {
+  // scene = obj.scene;
+  if (frame) {
+    const referenceSpace = renderer.xr.getReferenceSpace();
+    const session = renderer.xr.getSession();
+
+    if (hitTestSourceRequested === false) {
+      session.requestReferenceSpace("viewer").then(function (referenceSpace) {
+        session
+          .requestHitTestSource({ space: referenceSpace })
+          .then(function (source) {
+            hitTestSource = source;
+          });
+      });
+
+      session.addEventListener("end", function () {
+        hitTestSourceRequested = false;
+        hitTestSource = null;
+      });
+
+      hitTestSourceRequested = true;
+    }
+
+    if (hitTestSource) {
+      const hitTestResults = frame.getHitTestResults(hitTestSource);
+
+      if (hitTestResults.length) {
+        const hit = hitTestResults[0];
+
+        reticle.visible = true;
+        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+      } else {
+        reticle.visible = false;
+      }
+    }
+  }
   // XRFrame.getViewerPose().then((pose) => {
   //   // if (pose) {
   //   //   const view = pose.views[0];
@@ -351,8 +770,17 @@ renderer.setAnimationLoop(function () {
   // renderer.xr.updateCamera(camera);
 });
 
+// function animate() {
+//   renderer.setAnimationLoop(render);
+// }
+
+// function render(timestamp, frame) {
+//   renderer.render(scene, camera);
+// }
+
 const tick = () => {
   requestAnimationFrame(tick);
+
   const mixerUpdateDelta = clock.getDelta();
   for (let i = 0; i !== numSkullActions; ++i) {
     const action = allActions[i];
@@ -393,3 +821,6 @@ const tick = () => {
   // xrCamera.updateMatrixWorld();
   renderer.render(scene, camera);
 };
+// animate();
+panel.close();
+tick();
